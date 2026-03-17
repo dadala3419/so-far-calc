@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>So Far! 備料助手 8.0</title>
+    <title>So Far! 備料助手 9.0</title>
     <style>
         :root { --primary: #d4a373; --bg: #fffaf0; }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
@@ -69,19 +69,19 @@
                     <button class="a-btn" onpointerdown="setMF('A', 'strawberry', this)">草莓</button>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <input type="number" id="in-m-ja" value="6" oninput="calcM()" placeholder="罐">
-                    <input type="number" id="in-m-pa" value="0" oninput="calcM()" placeholder="包">
+                    <div style="flex:1"><label style="font-size:12px">預扣罐數</label><input type="number" id="in-m-ja" value="6" oninput="calcM()"></div>
+                    <div style="flex:1"><label style="font-size:12px">預扣包數</label><input type="number" id="in-m-pa" value="0" oninput="calcM()"></div>
                 </div>
             </div>
             <div style="background:#f0f7ff; padding:15px; border-radius:15px; margin-top:15px;">
-                <label>口味 B (剩餘)</label>
+                <label>口味 B (剩餘分配)</label>
                 <div class="tabs">
                     <button class="b-btn active" onpointerdown="setMF('B', 'tea', this)">港口茶</button>
                     <button class="b-btn" onpointerdown="setMF('B', 'cinnamon', this)">肉桂</button>
                     <button class="b-btn" onpointerdown="setMF('B', 'sesame', this)">芝麻</button>
                     <button class="b-btn" onpointerdown="setMF('B', 'strawberry', this)">草莓</button>
                 </div>
-                <p style="text-align:center; margin-top:10px; font-weight:bold;">剩餘奶油: <span id="rem-b">0</span> g</p>
+                <p style="text-align:center; margin-top:10px; font-weight:bold; color:#0077b6;">剩餘奶油分給 B: <span id="rem-b">0</span> g</p>
             </div>
         </div>
         <div id="out-m"></div>
@@ -142,8 +142,8 @@
         let ratioA = rA.b; for(let k in rA.i) ratioA += rA.i[k];
         const bA = ((ja*220)+(pa*325))/ratioA * rA.b;
         const bB = tot - bA;
-        document.getElementById('rem-b').innerText = bB.toFixed(1);
-        document.getElementById('out-m').innerHTML = render(curMA, bA, "A預扣") + render(curMB, bB, "B剩餘", true);
+        document.getElementById('rem-b').innerText = bB > 0 ? bB.toFixed(1) : 0;
+        document.getElementById('out-m').innerHTML = render(curMA, bA, "A 預扣") + render(curMB, bB, "B 剩餘分配", true);
     }
 
     function render(key, b, tag, est) {
@@ -151,19 +151,20 @@
         const r = recipes[key];
         const f = b / r.b;
         let h = `<div class="result-box"><table><tr><td colspan="2" class="title-td">${r.n} - ${tag}</td></tr>`;
-        h += `<tr><td>奶油</td><td class="val">${b.toFixed(1)}g</td></tr>`;
-        for(let k in r.i) h += `<tr><td>${k}</td><td class="val">${(r.i[k]*f).toFixed(1)}g</td></tr>`;
+        // 改為無條件進位 Math.ceil
+        h += `<tr><td>奶油</td><td class="val">${Math.ceil(b)} g</td></tr>`;
+        for(let k in r.i) h += `<tr><td>${k}</td><td class="val">${Math.ceil(r.i[k]*f)} g</td></tr>`;
+        
         if(est) {
             let rt = r.b; for(let k in r.i) rt += r.i[k];
             let tg = (b/r.b)*rt;
             let pk = Math.floor((tg/65)/5); let sk = Math.floor((tg/65)%5);
-            h += `</table><div class="est">預計總產出：${Math.floor(tg)}g<br>可做：${pk}包 + ${sk}片</div></div>`;
+            h += `</table><div class="est">預計總產出：${Math.ceil(tg)} g<br>約可製作：${pk} 包 + ${sk} 片厚片</div></div>`;
         } else h += `</table></div>`;
         return h;
     }
     
-    // 初始化
-    setTimeout(() => { calcS(); }, 100);
+    setTimeout(() => { calcS(); }, 200);
 </script>
 </body>
 </html>
