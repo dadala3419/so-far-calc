@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>So Far! 備料助手 8.0</title>
+    <style>
+        :root { --primary: #d4a373; --bg: #fffaf0; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .mode-switcher { display: flex; gap: 10px; margin-bottom: 15px; }
+        .mode-btn { flex: 1; padding: 15px; border: 2px solid var(--primary); background: #fff; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .mode-btn.active { background: var(--primary); color: #fff; }
+        .card { background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        h3 { color: var(--primary); text-align: center; margin: 0 0 15px 0; }
+        .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .tabs button { flex: 1; min-width: 80px; padding: 12px 5px; border: 1.5px solid var(--primary); background: #fff; border-radius: 10px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .tabs button.active { background: var(--primary); color: #fff; }
+        label { display: block; margin: 15px 0 5px; font-weight: bold; font-size: 14px; color: #666; }
+        input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 16px; outline: none; background: #fafafa; }
+        input:focus { border-color: var(--primary); background: #fff; }
+        .result-box { background: #fff; border-radius: 20px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 12px 10px; border-bottom: 1px solid #f9f9f9; }
+        .title-td { background: #faedcd; font-weight: bold; text-align: center; color: #856404; }
+        .val { text-align: right; font-weight: bold; }
+        .est { background: #e9edc9; padding: 15px; border-radius: 12px; margin-top: 10px; font-size: 14px; text-align: center; font-weight: bold; color: #5a6d3a; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="mode-switcher">
+        <button id="nav-s" class="mode-btn active" onpointerdown="setMode('s')">單一口味</button>
+        <button id="nav-m" class="mode-btn" onpointerdown="setMode('m')">混合分裝</button>
+    </div>
+
+    <div id="section-s">
+        <div class="card">
+            <h3>單一口味比例</h3>
+            <div class="tabs">
+                <button class="s-btn active" onpointerdown="setSF('tea', this)">港口茶</button>
+                <button class="s-btn" onpointerdown="setSF('cinnamon', this)">肉桂</button>
+                <button class="s-btn" onpointerdown="setSF('sesame', this)">芝麻</button>
+                <button class="s-btn" onpointerdown="setSF('strawberry', this)">草莓</button>
+            </div>
+            <label>投入奶油量 (g)</label>
+            <input type="number" id="in-s-b" value="1600" oninput="calcS()">
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1"><label>想做包數</label><input type="number" id="in-s-p" oninput="calcS('p')"></div>
+                <div style="flex:1"><label>想做罐數</label><input type="number" id="in-s-j" oninput="calcS('j')"></div>
+            </div>
+        </div>
+        <div id="out-s"></div>
+    </div>
+
+    <div id="section-m" style="display:none;">
+        <div class="card">
+            <h3>混合分裝模式</h3>
+            <label>總投入奶油 (g)</label>
+            <input type="number" id="in-m-t" value="1600" oninput="calcM()">
+            <div style="background:#fff9f0; padding:15px; border-radius:15px; margin-top:10px; border: 1px dashed var(--primary);">
+                <label>口味 A (預扣)</label>
+                <div class="tabs">
+                    <button class="a-btn active" onpointerdown="setMF('A', 'sesame', this)">芝麻</button>
+                    <button class="a-btn" onpointerdown="setMF('A', 'tea', this)">港口茶</button>
+                    <button class="a-btn" onpointerdown="setMF('A', 'cinnamon', this)">肉桂</button>
+                    <button class="a-btn" onpointerdown="setMF('A', 'strawberry', this)">草莓</button>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="in-m-ja" value="6" oninput="calcM()" placeholder="罐">
+                    <input type="number" id="in-m-pa" value="0" oninput="calcM()" placeholder="包">
+                </div>
+            </div>
+            <div style="background:#f0f7ff; padding:15px; border-radius:15px; margin-top:15px;">
+                <label>口味 B (剩餘)</label>
+                <div class="tabs">
+                    <button class="b-btn active" onpointerdown="setMF('B', 'tea', this)">港口茶</button>
+                    <button class="b-btn" onpointerdown="setMF('B', 'cinnamon', this)">肉桂</button>
+                    <button class="b-btn" onpointerdown="setMF('B', 'sesame', this)">芝麻</button>
+                    <button class="b-btn" onpointerdown="setMF('B', 'strawberry', this)">草莓</button>
+                </div>
+                <p style="text-align:center; margin-top:10px; font-weight:bold;">剩餘奶油: <span id="rem-b">0</span> g</p>
+            </div>
+        </div>
+        <div id="out-m"></div>
+    </div>
+</div>
+
+<script>
+    const recipes = {
+        tea: { n: "港口茶", b: 1600, i: { "糖粉": 600, "奶粉": 800, "港口茶粉": 120, "綠茶粉": 24 } },
+        cinnamon: { n: "肉桂", b: 1600, i: { "黑糖粉": 600, "奶粉": 800, "肉桂粉": 40, "可可粉": 10 } },
+        sesame: { n: "芝麻", b: 1600, i: { "黑糖粉": 600, "奶粉": 640, "芝麻粉": 800 } },
+        strawberry: { n: "草莓", b: 1600, i: { "糖粉": 600, "奶粉": 800, "草莓粉": 80, "草莓乾": 50 } }
+    };
+
+    let curMode = 's', curSF = 'tea', curMA = 'sesame', curMB = 'tea';
+
+    function setMode(m) {
+        curMode = m;
+        document.getElementById('section-s').style.display = m==='s'?'block':'none';
+        document.getElementById('section-m').style.display = m==='m'?'block':'none';
+        document.getElementById('nav-s').className = 'mode-btn ' + (m==='s'?'active':'');
+        document.getElementById('nav-m').className = 'mode-btn ' + (m==='m'?'active':'');
+        m==='s' ? calcS() : calcM();
+    }
+
+    function setSF(f, btn) {
+        curSF = f;
+        document.querySelectorAll('.s-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        calcS();
+    }
+
+    function setMF(type, f, btn) {
+        if(type==='A'){ curMA=f; document.querySelectorAll('.a-btn').forEach(b=>b.classList.remove('active')); }
+        else { curMB=f; document.querySelectorAll('.b-btn').forEach(b=>b.classList.remove('active')); }
+        btn.classList.add('active');
+        calcM();
+    }
+
+    function calcS(trigger) {
+        let butter = parseFloat(document.getElementById('in-s-b').value) || 0;
+        const r = recipes[curSF];
+        let ratioTotal = r.b; for(let k in r.i) ratioTotal += r.i[k];
+        if(trigger) {
+            let p = parseFloat(document.getElementById('in-s-p').value) || 0;
+            let j = parseFloat(document.getElementById('in-s-j').value) || 0;
+            butter = ((p*325)+(j*220))/ratioTotal*r.b;
+            document.getElementById('in-s-b').value = butter.toFixed(1);
+        }
+        document.getElementById('out-s').innerHTML = render(curSF, butter, "標準備料", true);
+    }
+
+    function calcM() {
+        const tot = parseFloat(document.getElementById('in-m-t').value) || 0;
+        const ja = parseFloat(document.getElementById('in-m-ja').value) || 0;
+        const pa = parseFloat(document.getElementById('in-m-pa').value) || 0;
+        const rA = recipes[curMA];
+        let ratioA = rA.b; for(let k in rA.i) ratioA += rA.i[k];
+        const bA = ((ja*220)+(pa*325))/ratioA * rA.b;
+        const bB = tot - bA;
+        document.getElementById('rem-b').innerText = bB.toFixed(1);
+        document.getElementById('out-m').innerHTML = render(curMA, bA, "A預扣") + render(curMB, bB, "B剩餘", true);
+    }
+
+    function render(key, b, tag, est) {
+        if(b <= 0) return "";
+        const r = recipes[key];
+        const f = b / r.b;
+        let h = `<div class="result-box"><table><tr><td colspan="2" class="title-td">${r.n} - ${tag}</td></tr>`;
+        h += `<tr><td>奶油</td><td class="val">${b.toFixed(1)}g</td></tr>`;
+        for(let k in r.i) h += `<tr><td>${k}</td><td class="val">${(r.i[k]*f).toFixed(1)}g</td></tr>`;
+        if(est) {
+            let rt = r.b; for(let k in r.i) rt += r.i[k];
+            let tg = (b/r.b)*rt;
+            let pk = Math.floor((tg/65)/5); let sk = Math.floor((tg/65)%5);
+            h += `</table><div class="est">預計總產出：${Math.floor(tg)}g<br>可做：${pk}包 + ${sk}片</div></div>`;
+        } else h += `</table></div>`;
+        return h;
+    }
+    
+    // 初始化
+    setTimeout(() => { calcS(); }, 100);
+</script>
+</body>
+</html>
